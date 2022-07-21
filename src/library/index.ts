@@ -1,20 +1,20 @@
-const express = require('express');
-const path = require('path');
-const cors = require('cors');
-const bodyParser = require("body-parser");
+import express from 'express';
+import path from 'path';
+import cors from 'cors';
+import bodyParser from "body-parser";
 
 //стартуем БД
 require("./infrastructure/mongo/db_connection");
 
 //middleware с обработкой ошибок
-const error404Middleware = require('./middleware/error404');
-const error500Middleware = require('./middleware/error500');
+import error404Middleware from './middleware/error404';
+import error500Middleware from './middleware/error500';
 
 //routes
-const indexRouter = require('./web/routes/index');
-const booksRouter = require('./web/routes/books');
-const apiUserRouter = require('./api/routes/user');
-const apiBooksRouter = require('./api/routes/books');
+import indexRouter from './web/routes/index';
+import booksRouter from './web/routes/books';
+import apiUserRouter from './api/routes/user';
+import apiBooksRouter from './api/routes/books';
 
 const app = express();
 

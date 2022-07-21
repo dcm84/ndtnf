@@ -1,19 +1,19 @@
-const fs = require('fs');
-const express = require('express');
+import express, { Request, Response } from 'express';
 const router = express.Router();
-const fileMiddleware = require('../../middleware/file');
-const { container } = require("../../infrastructure/ioc-container");
+import fileMiddleware from '../../middleware/file';
+import { container } from "../../infrastructure/ioc-container";
+import bookRepositoryInterface from '../../interfaces/BookRepositoryInterface'
 
-router.get('/', async (req, res) => {
-    const bookRepository = container.get("BookRepository");
-    const books = await bookRepository.getBooks()
+router.get('/', async (req : Request, res: Response) => {
+    const bookRepo = container.get(bookRepositoryInterface);
+    const books = await bookRepo.getBooks()
     res.render("books/index", {
         title: "Library",
         books
     });
 });
 
-router.get('/create', (req, res) => {
+router.get('/create', (req : Request, res: Response) => {
     res.render("books/create", {
         title: "Добавление книги",
         book: {},
@@ -23,15 +23,15 @@ router.get('/create', (req, res) => {
 router.post('/create', fileMiddleware.fields([
     { name: 'cover-img', maxCount: 1 },
     { name: 'book-file', maxCount: 1 }
-]), async (req, res) => {
+]), async (req : Request, res: Response) => {
 
     const { title, desc, authors, favorite } = req.body;
 
-    if ('cover-img' in req.files && 'book-file' in req.files && title.trim() != "") {
+    if (req.files != undefined && 'cover-img' in req.files && 'book-file' in req.files && title.trim() != "") {
 
         try {
-            const bookRepository = container.get("BookRepository");
-            await bookRepository.createBook({
+            const bookRepo = container.get(bookRepositoryInterface);
+            await bookRepo.createBook({
                 title, 
                 description: desc, authors, favorite,
                 fileCover: req.files['cover-img'][0]['path'].replaceAll(/[\\]+/g, '/'),
@@ -52,13 +52,13 @@ router.post('/create', fileMiddleware.fields([
     }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req : Request, res: Response) => {
     const { id } = req.params;
     let book
 
     try {
-        const bookRepository = container.get("BookRepository");
-        book = await bookRepository.getBook(id);
+        const bookRepo = container.get(bookRepositoryInterface);
+        book = await bookRepo.getBook(id);
     } catch (e) {
         console.error(e);
         res.status(404).redirect('/404');
@@ -70,13 +70,13 @@ router.get('/:id', async (req, res) => {
     });
 });
 
-router.get('/update/:id', async (req, res) => {
+router.get('/update/:id', async (req : Request, res: Response) => {
     const { id } = req.params;
     let book
 
     try {
-        const bookRepository = container.get("BookRepository");
-        book = await bookRepository.getBook(id);
+        const bookRepo = container.get(bookRepositoryInterface);
+        book = await bookRepo.getBook(id);
     } catch (e) {
         console.error(e);
         res.status(404).redirect('/404');
@@ -91,16 +91,16 @@ router.get('/update/:id', async (req, res) => {
 router.post('/update/:id', fileMiddleware.fields([
     { name: 'cover-img', maxCount: 1 },
     { name: 'book-file', maxCount: 1 }
-]), async (req, res) => {
+]), async (req : Request, res: Response) => {
 
     const { title, desc, authors, favorite } = req.body;
     const { id } = req.params;
 
     //если загружены новые файлы 
-    if ('cover-img' in req.files && 'book-file' in req.files && title.trim() != "") {
+    if (req.files != undefined && 'cover-img' in req.files && 'book-file' in req.files && title.trim() != "") {
         try {
-            const bookRepository = container.get("BookRepository");
-            await bookRepository.updateBook(id, {
+            const bookRepo = container.get(bookRepositoryInterface);
+            await bookRepo.updateBook(id, {
                 title, 
                 description: desc, authors, favorite,
                 fileCover: req.files['cover-img'][0]['path'].replaceAll(/[\\]+/g, '/'),
@@ -122,12 +122,12 @@ router.post('/update/:id', fileMiddleware.fields([
     }
 });
 
-router.post('/delete/:id', async (req, res) => {
+router.post('/delete/:id', async (req : Request, res: Response) => {
     const { id } = req.params;
 
     try {
-        const bookRepository = container.get("BookRepository");
-        await bookRepository.deleteBook(id);
+        const bookRepo = container.get(bookRepositoryInterface);
+        await bookRepo.deleteBook(id);
         res.redirect('/books');
 
     } catch (e) {
@@ -138,13 +138,13 @@ router.post('/delete/:id', async (req, res) => {
     }
 });
 
-router.get('/:id/download', async (req, res) => {
+router.get('/:id/download', async (req : Request, res: Response) => {
     const { id } = req.params;
     try {
-        const bookRepository = container.get("BookRepository");
-        let book = await bookRepository.getBook(id);
+        const bookRepo = container.get(bookRepositoryInterface);
+        let book = await bookRepo.getBook(id);
         
-        if(book.fileBook) {
+        if(book != null && book.fileBook) {
             res.download(__dirname + '/../' + book.fileBook, book.title + book.fileBook.replace(/.*(\.[a-z0-9]+)$/, "$1"), err => {});
         }
         else {
@@ -157,4 +157,4 @@ router.get('/:id/download', async (req, res) => {
 
 });
 
-module.exports = router;
+export default router;
